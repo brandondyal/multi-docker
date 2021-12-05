@@ -1,0 +1,25 @@
+
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t brandondyal/react-test -f ./client/Dockerfile.dev ./client
+  # any additional projects to run tests on must be built here
+  # and have a script included
+
+script:
+  - docker run -e CI=true brandondyal/react-test npm test
+
+after_success:
+  - docker build -t brandondyal/multi-client ./client
+  - docker build -t brandondyal/multi-nginx ./nginx
+  - docker build -t brandondyal/multi-server ./server
+  - docker build -t brandondyal/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  
+  - docker push brandondyal/multi-client
+  - docker push brandondyal/multi-nginx
+  - docker push brandondyal/multi-server
+  - docker push brandondyal/multi-worker
